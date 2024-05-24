@@ -1,13 +1,13 @@
-from flask import Blueprint, abort
+from flask import Blueprint
 from core import db
 from core.apis import decorators
 from core.apis.responses import APIResponse
 from core.models.assignments import Assignment
 from core.libs.exceptions import FyleError
-
+from core.libs.assertions import base_assert
 from .schema import AssignmentSchema, AssignmentSubmitSchema
-student_assignments_resources = Blueprint('student_assignments_resources', __name__)
 
+student_assignments_resources = Blueprint('student_assignments_resources', __name__)
 
 @student_assignments_resources.route('/assignments', methods=['GET'], strict_slashes=False)
 @decorators.authenticate_principal
@@ -40,7 +40,8 @@ def submit_assignment(p, incoming_payload):
     submit_assignment_payload = AssignmentSubmitSchema().load(incoming_payload)
 
     if Assignment.get_by_id(submit_assignment_payload.id).state == "SUBMITTED":
-        raise FyleError(400, "only a draft assignment can be submitted")
+        err =  FyleError(400, "Teacher ID is required to grade an assignment").to_dict()
+        base_assert(400, "only a draft assignment can be submitted")
 
     submitted_assignment = Assignment.submit(
         _id=submit_assignment_payload.id,

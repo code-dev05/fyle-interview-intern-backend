@@ -2,8 +2,9 @@ from flask import Blueprint, abort
 from core import db
 from core.apis import decorators
 from core.apis.responses import APIResponse
-from core.models.assignments import Assignment, AssignmentStateEnum
+from core.models.assignments import Assignment
 from core.libs.exceptions import FyleError
+from core.libs.assertions import assert_found
 
 from .schema import AssignmentSchema, AssignmentGradeSchema
 teacher_assignments_resources = Blueprint('teacher_assignments_resources', __name__)
@@ -25,8 +26,7 @@ def grade_assignment(p, incoming_payload):
     """Grade an assignment"""
     grade_assignment_payload = AssignmentGradeSchema().load(incoming_payload)
     
-    if Assignment.get_by_id(grade_assignment_payload.id) is None:
-        raise FyleError(404, "Assignment not Found")
+    assert_found(Assignment.get_by_id(grade_assignment_payload.id), "Assignment not Found")
     if Assignment.get_by_id(grade_assignment_payload.id).teacher_id is None:
         abort(400, "Teacher ID is required to grade an assignment")
     if Assignment.get_by_id(grade_assignment_payload.id).teacher_id != p.teacher_id:
