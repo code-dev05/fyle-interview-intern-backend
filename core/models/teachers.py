@@ -1,7 +1,6 @@
 from core import db
 from core.libs import helpers
 
-
 class Teacher(db.Model):
     __tablename__ = 'teachers'
     id = db.Column(db.Integer, db.Sequence('teachers_id_seq'), primary_key=True)
@@ -11,3 +10,8 @@ class Teacher(db.Model):
 
     def __repr__(self):
         return '<Teacher %r>' % self.id
+    
+    @classmethod
+    def get_teachers_by_principal(cls):
+        db_query = db.session.query(cls)
+        return db_query.filter().all()

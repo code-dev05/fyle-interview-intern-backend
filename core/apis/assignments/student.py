@@ -1,8 +1,9 @@
-from flask import Blueprint
+from flask import Blueprint, abort
 from core import db
 from core.apis import decorators
 from core.apis.responses import APIResponse
 from core.models.assignments import Assignment
+from core.libs.exceptions import FyleError
 
 from .schema import AssignmentSchema, AssignmentSubmitSchema
 student_assignments_resources = Blueprint('student_assignments_resources', __name__)
@@ -38,11 +39,15 @@ def submit_assignment(p, incoming_payload):
     """Submit an assignment"""
     submit_assignment_payload = AssignmentSubmitSchema().load(incoming_payload)
 
+    if Assignment.get_by_id(submit_assignment_payload.id).state == "SUBMITTED":
+        raise FyleError(400, "only a draft assignment can be submitted")
+
     submitted_assignment = Assignment.submit(
         _id=submit_assignment_payload.id,
         teacher_id=submit_assignment_payload.teacher_id,
         auth_principal=p
     )
+    
     db.session.commit()
     submitted_assignment_dump = AssignmentSchema().dump(submitted_assignment)
     return APIResponse.respond(data=submitted_assignment_dump)
